@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Prólogo — De Oveja a Lobo</title>
+<link rel="stylesheet" href="../assets/css/style.css"/>
+</head>
+<body>
+
+<section class="cinematic" id="intro">
+  <div class="backdrop"></div>
+  <div class="scanlines"></div>
+  <div class="type">
+    <h2>París, 2017 — El Inicio del Juego</h2>
+    <p id="typewriter"></p>
+    <div class="small">Si no escuchas audio, haz clic o toca la pantalla.</div>
+  </div>
+</section>
+
+<section class="press-start" id="press">
+  <div class="msg">&gt; PRESS START TO BEGIN<span class="cursor"></span></div>
+</section>
+
+<div class="flash" id="flash"></div>
+
+<section class="mission" id="mission0" style="display:none">
+  <h3>🗺️ MISIÓN 0 — El Juego del Dinero</h3>
+  <ul>
+    <li>Despertar del sueño financiero.</li>
+    <li>Elegir: oveja o lobo (mentalidad).</li>
+    <li>Prepararte para fallar, aprender y volver a intentar.</li>
+  </ul>
+  <div class="center">
+    <a class="btn primary" href="nivel-0.html">▶ Continuar al Nivel 0</a>
+  </div>
+</section>
+
+<audio id="bg-music" src="../assets/sounds/game_music.wav" preload="auto" loop></audio>
+<audio id="retro-loop" src="../assets/sounds/retro_loop.wav" preload="auto" loop></audio>
+<audio id="type-sfx" src="../assets/sounds/typewriter.mp3" preload="auto"></audio>
+<audio id="start-beep" src="../assets/sounds/start_beep.wav" preload="auto"></audio>
+<audio id="glitch" src="../assets/sounds/transition_glitch.wav" preload="auto"></audio>
+<audio id="win" src="../assets/sounds/win_jingle.wav" preload="auto"></audio>
+
+<script>
+const text = `Todo empezó en París, 2017.\nUna oveja perdida observaba a los lobos en traje,\ncazando dinero bajo las luces de la ciudad...`;
+const el = document.getElementById('typewriter');
+const typeSfx = document.getElementById('type-sfx');
+const bgMusic = document.getElementById('bg-music');
+let audioReady = false;
+
+function playOnce(a){ try{ a.currentTime = 0; a.play(); }catch(e){} }
+function tryPlay(a){ a.play().then(()=>{}).catch(()=>{}); }
+
+function typewrite(i=0){
+  if(i === 0 && audioReady){ playOnce(typeSfx); tryPlay(bgMusic); }
+  if(i < text.length){
+    el.innerHTML += text[i] === "\n" ? "<br/>" : text[i];
+    setTimeout(()=>typewrite(i+1), 36);
+  }
+}
+
+document.addEventListener('click', ()=>{
+  audioReady = true;
+  tryPlay(bgMusic);
+  tryPlay(typeSfx);
+}, { once:true });
+
+window.addEventListener('load', ()=>{
+  setTimeout(typewrite, 400);
+});
+
+const press = document.getElementById('press');
+const flash = document.getElementById('flash');
+const startBeep = document.getElementById('start-beep');
+const glitch = document.getElementById('glitch');
+const retro = document.getElementById('retro-loop');
+const mission0 = document.getElementById('mission0');
+
+function startSequence(){
+  if(audioReady){ playOnce(startBeep); }
+  flash.classList.add('on');
+  setTimeout(()=>flash.classList.remove('on'), 250);
+  setTimeout(()=>{
+    if(audioReady){ playOnce(glitch); }
+    bgMusic.pause();
+    tryPlay(retro);
+    mission0.style.display = 'block';
+    press.style.display = 'none';
+    setTimeout(()=>{ const win = document.getElementById('win'); if(audioReady){ playOnce(win); } }, 600);
+  }, 250);
+}
+
+press.addEventListener('click', startSequence);
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ startSequence(); } });
+</script>
+
+</body>
+</html>
