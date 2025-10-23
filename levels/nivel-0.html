@@ -3,21 +3,305 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Nivel 0 — Presiona START (Inflación)</title>
+<title>Nivel 0 — El Ladrón Silencioso (Inflación)</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/css/style.css"/>
+
+<style>
+:root{ --ink:#E9EEF6; --muted:#B9C4D8; --gold:#FFD86A; --cyan:#86E7FF; --hp:#7CFF8A; --hpLow:#FF6B6B; --panel:rgba(6,10,22,.90); --panelHC:#05070D; }
+html{ font-size:18px } @media (min-width:1024px){ html{ font-size:19px } }
+body{ font-family:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; letter-spacing:.1px; background:#0a0f1a }
+.page{min-height:100vh; display:grid; grid-template-rows:auto 1fr auto}
+.header, .footer{padding:12px 16px}
+.main{padding:18px}
+
+/* HUD */
+.hud{display:grid; gap:12px; grid-template-columns:1fr; margin-bottom:16px}
+@media(min-width:900px){ .hud{grid-template-columns: 2fr 1fr} }
+.card{background:var(--panel); border:1px solid rgba(255,255,255,.16); border-radius:16px; padding:14px 14px; box-shadow:0 20px 50px rgba(0,0,0,.38)}
+body.hc .card{background:var(--panelHC); border-color:#3A4A74}
+.hud h1{font-size: clamp(20px,3vw,28px); color:var(--gold); margin:0 0 8px}
+.row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.badge{font-weight:700; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--muted)}
+.stat{display:flex; gap:8px; align-items:center}
+.stat b{color:var(--gold)}
+.sep{height:12px}
+
+/* HP Bar */
+.hpBar{position:relative; height:16px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:999px; overflow:hidden}
+.hpFill{height:100%; width:100%; background:linear-gradient(90deg, var(--hp), #44d16c); transition:width .8s ease}
+.hpFill.low{background:linear-gradient(90deg, var(--hpLow), #ff946b)}
+.hpLabel{font-size:12px; color:var(--muted); margin-top:6px}
+
+/* Boss */
+.boss{display:grid; gap:10px}
+.boss h2{margin:0; color:#ffb86b; font-size: clamp(18px,2.2vw,22px)}
+.bossNote{font-size:14px; color:var(--muted)}
+
+/* Paneles de evento */
+.events{display:grid; gap:12px; grid-template-columns:1fr}
+@media(min-width:900px){ .events{grid-template-columns:1fr 1fr} }
+.event{background:var(--panel); border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:12px}
+.event h3{margin:0 0 6px; font-size:16px; color:var(--gold)}
+.event p{margin:8px 0; line-height:1.8}
+.event .delta{font-weight:700}
+.event .act{margin-top:8px}
+
+/* Choices */
+.choices{display:grid; gap:12px; margin-top:14px}
+.choice{display:flex; justify-content:space-between; align-items:center; gap:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:12px}
+.choice p{margin:0}
+.choice .do{display:flex; gap:8px; align-items:center}
+.btn{border:1px solid rgba(255,255,255,.22); background:#151e33; color:var(--ink); border-radius:10px; padding:8px 12px; cursor:pointer; font-weight:700}
+.btn:hover{background:#1a2642}
+.btn.primary{background:#1c2e54}
+.btn.go{background:#143d2a}
+.btn.warn{background:#552a1c}
+.notice{font-size:13px; color:var(--muted); margin-top:6px}
+
+/* Footer nav */
+.navRow{display:flex; justify-content:space-between; align-items:center; gap:12px}
+
+/* AA button */
+.aa{ position: fixed; top: 14px; right: 14px; z-index: 9999; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.25); background: rgba(20,28,48,.85); color: #E9EEF6; font-weight: 700; cursor: pointer;}
+.aa:hover{ background: rgba(20,28,48,.98); }
+
+/* Typewriter utility */
+.typewriter{white-space:pre-wrap}
+.tip{font-size:13px; color:var(--muted)}
+</style>
 </head>
 <body>
-  <div class="header">
-    <h1>Nivel 0 — Presiona START (Inflación)</h1>
-    <p>Primera misión: entender al jefe invisible — la inflación.</p>
-  </div>
-  <main class="hero">
-    <div class="card">
-      <div class="body">
-        <p>(Coloca aquí tu texto del Nivel 0. Integraremos memes y gráficos — barra de vida del jefe — en la siguiente iteración.)</p>
-        <div class="center"><a class="btn" href="prologo.html">← Volver al Prólogo</a></div>
-      </div>
+<button id="toggleAA" class="aa" aria-pressed="false" title="Alto contraste y tamaño de texto">AA</button>
+
+<!-- Audio -->
+<audio id="bgIntro"   src="../assets/sounds/game_music.wav" preload="auto" loop></audio>
+<audio id="bgRetro"   src="../assets/sounds/retro_loop.wav"   preload="auto" loop></audio>
+<audio id="sfxType"   src="../assets/sounds/typewriter.mp3"  preload="auto"></audio>
+<audio id="sfxBeep"   src="../assets/sounds/start_beep.wav"   preload="auto"></audio>
+<audio id="sfxGlitch" src="../assets/sounds/transition_glitch.wav" preload="auto"></audio>
+<audio id="sfxWin"    src="../assets/sounds/win_jingle.wav"   preload="auto"></audio>
+
+<div class="page">
+  <header class="header">
+    <div class="row">
+      <span class="badge">Nivel 0 — Tutorial</span>
+      <span class="badge">Tema: Inflación</span>
+      <span class="badge">Dificultad: 🟡</span>
     </div>
+  </header>
+
+  <main class="main">
+    <!-- HUD -->
+    <section class="hud">
+      <div class="card">
+        <h1>HUD — Interfaz de Juego</h1>
+        <div class="row">
+          <div class="stat">🧍 <b>Jugador:</b>&nbsp; Novato Financiero</div>
+          <div class="stat">💰 <b>Monedas iniciales:</b>&nbsp; 100</div>
+          <div class="stat">🔥 <b>Debuff Activo:</b>&nbsp; Inflación (−8% anual)</div>
+          <div class="stat">🛡️ <b>Defensa Actual:</b>&nbsp; 0</div>
+        </div>
+        <div class="sep"></div>
+        <div class="hpBar" aria-label="Poder adquisitivo (barra de vida)">
+          <div id="hpFill" class="hpFill" style="width:100%"></div>
+        </div>
+        <div class="hpLabel">❤️ Poder Adquisitivo</div>
+        <div class="notice">Cada “evento de precios” reducirá tu barra si no haces nada. Tu objetivo es desbloquear defensas.</div>
+      </div>
+
+      <div class="card boss">
+        <h2>👹 Boss: Inflación</h2>
+        <div class="bossNote">No puedes eliminarla, pero puedes superarla. Si tu dinero crece más rápido que los precios, **ganas**.</div>
+        <div class="row">
+          <span class="badge">Patrón de ataque: continuo</span>
+          <span class="badge">Daño base: −8% anual</span>
+          <span class="badge">Debilidad: interés compuesto</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Narrativa breve -->
+    <section class="card">
+      <p id="introText" class="typewriter">
+El dinero quieto se oxida. A veces no lo ves de golpe, pero lo sientes en el OXXO, en la gasolinera, en la renta.
+Tu primera misión no es “ganar más” — es **dejar de perder**.
+      </p>
+      <div class="tip">Tip: haz clic en el párrafo para mostrar todo el texto si no quieres ver la animación.</div>
+    </section>
+
+    <div class="sep"></div>
+
+    <!-- Eventos de precios -->
+    <section class="events">
+      <div class="event">
+        <h3>🍫 Gansito</h3>
+        <p>Año 2000: $2.50 &nbsp;→&nbsp; 2025: ~$20.00</p>
+        <p class="delta">Daño por inflación: +700%</p>
+        <div class="act">
+          <button class="btn warn" data-damage="10">Ignorar</button>
+          <button class="btn go"   data-shield="5">Anclar gasto (presupuesto)</button>
+        </div>
+      </div>
+
+      <div class="event">
+        <h3>🥔 Sabritas (chicas)</h3>
+        <p>Año 2000: $3.50 &nbsp;→&nbsp; 2025: ~$20.00</p>
+        <p class="delta">Daño por inflación: +470%</p>
+        <div class="act">
+          <button class="btn warn" data-damage="10">Ignorar</button>
+          <button class="btn go"   data-shield="5">Alternativa/plan (presupuesto)</button>
+        </div>
+      </div>
+
+      <div class="event">
+        <h3>⛽ Gasolina (1 L)</h3>
+        <p>Año 2000: $5.50 &nbsp;→&nbsp; 2025: > $24.00</p>
+        <p class="delta">Daño por inflación: +330%</p>
+        <div class="act">
+          <button class="btn warn" data-damage="15">Ignorar</button>
+          <button class="btn go"   data-shield="8">Optimizar consumo / plan de movilidad</button>
+        </div>
+      </div>
+
+      <div class="event">
+        <h3>🏠 Renta</h3>
+        <p>De $3,000 &nbsp;→&nbsp; $9,000+ al mes</p>
+        <p class="delta">Daño por inflación + mercado</p>
+        <div class="act">
+          <button class="btn warn" data-damage="18">Ignorar</button>
+          <button class="btn go"   data-shield="10">Estrategia (roomie / renegociar / cuota fija)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Decisión -->
+    <section class="card choices">
+      <div class="choice">
+        <p>🐑 <b>Modo Oveja:</b> Guardar efectivo “bajo el colchón”.</p>
+        <div class="do">
+          <button class="btn warn" id="btnSheep">Elegir</button>
+        </div>
+      </div>
+      <div class="choice">
+        <p>🐺 <b>Modo Lobo:</b> Abrir <i>Cuenta de Inversión Básica</i> y automatizar 10% mensual.</p>
+        <div class="do">
+          <button class="btn go" id="btnWolf">Desbloquear</button>
+        </div>
+      </div>
+      <div class="notice" id="resultMsg">Elige una estrategia.</div>
+    </section>
   </main>
+
+  <footer class="footer">
+    <div class="navRow">
+      <a class="btn" href="prologo.html">⟵ Prólogo</a>
+      <button class="btn primary" id="nextLevel" disabled>Continuar al Nivel 1 ⟶</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* Audio gesture */
+let audioReady=false;
+const bgIntro   = document.getElementById('bgIntro');
+const bgRetro   = document.getElementById('bgRetro');
+const sfxType   = document.getElementById('sfxType');
+const sfxBeep   = document.getElementById('sfxBeep');
+function tryPlay(a){ a && a.play && a.play().catch(()=>{}); }
+function playOnce(a){ if(!a) return; try{ a.currentTime=0; a.play(); }catch(e){} }
+document.addEventListener('click', ()=>{ if(!audioReady){ audioReady=true; tryPlay(bgRetro);} }, {once:true});
+
+/* Typewriter with click-to-skip */
+const introText = document.getElementById('introText');
+const introRaw  = introText.textContent;
+introText.textContent = "";
+const speed = 14;
+function typeWriter(el, text, idx=0){
+  if(idx===0 && audioReady) playOnce(sfxType);
+  if(idx<text.length){
+    el.innerHTML += text[idx] === "\n" ? "<br/>" : text[idx];
+    setTimeout(()=>typeWriter(el,text,idx+1),speed);
+  }
+}
+typeWriter(introText, introRaw);
+introText.addEventListener('click', ()=>{ introText.innerHTML = introRaw.replaceAll("\n","<br/>"); }, {once:true});
+
+/* HP logic */
+let hp = 100;
+let shield = 0;
+const hpFill = document.getElementById('hpFill');
+function renderHP(){
+  const w = Math.max(0, Math.min(100, hp));
+  hpFill.style.width = w + "%";
+  if (w <= 35){ hpFill.classList.add('low'); } else { hpFill.classList.remove('low'); }
+}
+renderHP();
+
+function takeDamage(d){ 
+  const absorb = Math.min(shield, d);
+  d -= absorb;
+  shield -= absorb;
+  hp -= d;
+  renderHP();
+}
+function addShield(s){ shield += s; }
+
+/* Event buttons */
+document.querySelectorAll('.event .btn.warn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const dmg = Number(b.dataset.damage||"10");
+    takeDamage(dmg);
+    b.disabled = true;
+  });
+});
+document.querySelectorAll('.event .btn.go').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const sh = Number(b.dataset.shield||"5");
+    addShield(sh);
+    b.disabled = true;
+    playOnce(sfxBeep);
+  });
+});
+
+/* Choices */
+const resultMsg = document.getElementById('resultMsg');
+const btnSheep = document.getElementById('btnSheep');
+const btnWolf  = document.getElementById('btnWolf');
+const nextBtn  = document.getElementById('nextLevel');
+
+btnSheep.addEventListener('click', ()=>{
+  takeDamage(20); // perder vs inflación
+  resultMsg.innerHTML = "Elegiste 🐑 Modo Oveja. El efectivo pierde valor con el tiempo. <br>Tip: pasa al Modo Lobo para desbloquear defensa.";
+});
+
+btnWolf.addEventListener('click', ()=>{
+  addShield(25); // cuenta de inversión básica
+  resultMsg.textContent = "¡Modo 🐺 Lobo activado! Desbloqueaste: Cuenta de Inversión Básica (+25 de defensa).";
+  nextBtn.disabled = false;
+  playOnce(sfxBeep);
+});
+
+/* Next level (ajusta la ruta del nivel 1 si la tienes) */
+nextBtn.addEventListener('click', ()=>{
+  // ejemplo: levels/nivel-1.html (cámbialo si tu estructura es distinta)
+  window.location.href = "nivel-1.html";
+});
+
+/* AA toggle */
+const aa = document.getElementById('toggleAA');
+if (aa){
+  const saved = localStorage.getItem('hc') === 'true';
+  if (saved) document.body.classList.add('hc');
+  aa.setAttribute('aria-pressed', saved ? 'true' : 'false');
+  aa.addEventListener('click', ()=>{
+    document.body.classList.toggle('hc');
+    const on = document.body.classList.contains('hc');
+    localStorage.setItem('hc', on);
+    aa.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+</script>
 </body>
 </html>
